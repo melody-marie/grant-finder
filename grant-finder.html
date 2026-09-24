@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grant Finder: LGBTQ+ rights, justice & awareness</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1D1830;
+    --ink-soft:#4F4869;
+    --paper:#F5F3F8;
+    --surface:#FFFFFF;
+    --line:#DDD8E8;
+    --focus:#1D1830;
+    --lgbtq:#7B3FBF;
+    --trans:#1B7FAE;
+    --racial:#BD4318;
+    --legal:#1E7A5E;
+    --awareness:#B77F00;
+    --health:#BF3266;
+    --scholar:#3B4FC0;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px;line-height:1.5;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:28px 18px 64px}
+  h1,h2,h3{font-family:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;margin:0}
+  h1{font-size:clamp(2.3rem,9vw,3.6rem);line-height:.98;font-weight:800;letter-spacing:-.03em}
+  .sub{margin:14px 0 0;color:var(--ink-soft);max-width:34em;font-size:1.05rem}
+  .promise{margin:18px 0 0;padding:10px 14px;background:var(--ink);color:#fff;border-radius:6px;font-size:.95rem}
+
+  /* the one bold element: results spectrum */
+  .spectrum{margin:26px 0 8px}
+  .bar{display:flex;gap:3px;height:18px}
+  .bar button{
+    border:0;padding:0;border-radius:4px;cursor:pointer;min-width:6px;
+    transition:flex-grow .35s ease, opacity .2s;
+  }
+  .bar button[aria-pressed="false"].dim{opacity:.28}
+  .bar-caption{margin:8px 0 0;font-size:.9rem;color:var(--ink-soft);min-height:1.4em}
+
+  .search{margin-top:22px}
+  .search label{display:block;font-weight:700;margin-bottom:6px}
+  .search input{
+    width:100%;font:inherit;padding:13px 14px;border:2px solid var(--ink);border-radius:8px;background:var(--surface);color:var(--ink);
+  }
+  .filters{margin-top:18px;display:grid;gap:16px}
+  .fgroup > .flabel{display:block;font-weight:700;font-size:.95rem;margin-bottom:8px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    font:inherit;font-size:.92rem;padding:7px 12px;border-radius:999px;border:1.5px solid var(--line);
+    background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  }
+  .chip .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .toggle{display:flex;align-items:center;gap:10px;font-size:.95rem;cursor:pointer}
+  .toggle input{width:20px;height:20px;accent-color:var(--ink)}
+  .note{margin:10px 0 0;padding:10px 12px;border-left:4px solid var(--legal);background:#E7F3EE;font-size:.92rem;border-radius:0 6px 6px 0}
+
+  .tabs{display:flex;gap:6px;margin:30px 0 4px;border-bottom:2px solid var(--ink)}
+  .tab{
+    font:inherit;font-weight:700;background:none;border:0;padding:10px 14px;cursor:pointer;color:var(--ink-soft);
+    border-radius:8px 8px 0 0;
+  }
+  .tab[aria-selected="true"]{background:var(--ink);color:#fff}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:12px 0;font-size:.92rem;color:var(--ink-soft)}
+  .linkbtn{font:inherit;background:none;border:0;color:var(--ink);text-decoration:underline;cursor:pointer;padding:4px 0}
+
+  .list{list-style:none;margin:0;padding:0}
+  .grant{
+    position:relative;padding:20px 0 20px 18px;border-bottom:1px solid var(--line);
+  }
+  .grant::before{content:"";position:absolute;left:0;top:22px;bottom:22px;width:6px;border-radius:3px;background:var(--c)}
+  .g-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .grant h3{font-size:1.25rem;line-height:1.15;font-weight:700;letter-spacing:-.01em}
+  .g-focus{margin:3px 0 0;font-size:.88rem;color:var(--c);font-weight:700}
+  .save{
+    flex:none;font:inherit;font-size:.88rem;font-weight:700;border:1.5px solid var(--ink);background:var(--surface);color:var(--ink);
+    padding:6px 11px;border-radius:8px;cursor:pointer;min-width:74px
+  }
+  .save[aria-pressed="true"]{background:var(--ink);color:#fff}
+  .g-blurb{margin:10px 0 0}
+  .g-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 0 0;font-size:.9rem;color:var(--ink-soft)}
+  .g-meta strong{color:var(--ink)}
+  .status{font-weight:700;padding:1px 8px;border-radius:4px;font-size:.85rem}
+  .st-open{background:#DDF1E7;color:#145A43}
+  .st-rolling{background:#DDEBF7;color:#154A75}
+  .st-check{background:#F6EBCB;color:#6B4A00}
+  .st-invite{background:#ECE6F5;color:#4B2C7A}
+  .g-tip{margin:10px 0 0;font-size:.92rem}
+  .g-link{display:inline-block;margin-top:12px;font-weight:700;color:var(--ink);text-underline-offset:3px}
+
+  .empty{padding:34px 0;text-align:center}
+  .empty p{margin:0 0 12px}
+  .btn{font:inherit;font-weight:700;background:var(--ink);color:#fff;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}
+
+  .more{margin-top:44px}
+  .more h2{font-size:1.5rem;letter-spacing:-.02em}
+  .more p{color:var(--ink-soft)}
+  .more ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+  .more li{padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+  .more a{font-weight:700;color:var(--ink)}
+  .more li span{display:block;font-size:.92rem;color:var(--ink-soft)}
+  .fine{margin-top:34px;font-size:.85rem;color:var(--ink-soft)}
+  .toast{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;
+    border-radius:8px;font-size:.92rem;opacity:0;pointer-events:none;transition:opacity .2s
+  }
+  .toast.on{opacity:1}
+
+  .live{margin-top:18px;padding:14px;border:2px solid var(--ink);border-radius:10px;background:var(--surface)}
+  .live-row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between}
+  .live h2{font-size:1.1rem}
+  .live-status{margin:6px 0 0;font-size:.92rem;color:var(--ink-soft);min-height:1.4em}
+  .pulse{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--legal);margin-right:7px}
+  .pulse.busy{animation:pulse 1s ease-in-out infinite}
+  @keyframes pulse{50%{opacity:.25}}
+  .live .toggle{margin-top:10px}
+  .btn[disabled]{opacity:.6;cursor:progress}
+  .newtag{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:4px;background:var(--legal);color:#fff;font-size:.78rem;font-weight:700;vertical-align:middle;letter-spacing:.02em}
+  .st-live{background:#145A43;color:#fff}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+  .bar button:focus-visible{outline-offset:3px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Grants you never pay back.</h1>
+    <p class="sub">Funding for LGBTQ+ rights, fighting injustice, and raising awareness. Search, filter, and save the ones worth a closer look.</p>
+    <p class="promise">Every funder here gives grants or scholarships, not loans.</p>
+    <div class="live" aria-labelledby="liveH">
+      <div class="live-row">
+        <h2 id="liveH"><span class="pulse" id="pulse"></span>Live grant updates</h2>
+        <button class="btn" id="liveBtn" type="button">Check for new grants</button>
+      </div>
+      <p class="live-status" id="liveStatus" role="status" aria-live="polite">Starting up…</p>
+      <label class="toggle"><input type="checkbox" id="autoLive"> Re-check every 30 minutes while this page is open</label>
+      <label class="toggle"><input type="checkbox" id="liveOnly"> Show only live finds</label>
+    </div>
+  </header>
+
+  <section class="spectrum" aria-label="Results by focus area">
+    <div class="bar" id="bar"></div>
+    <p class="bar-caption" id="barCaption"></p>
+  </section>
+
+  <section class="search">
+    <label for="q">Search by name, place, or topic</label>
+    <input id="q" type="search" placeholder="Try: trans, legal, Florida, film, youth" autocomplete="off">
+    <div class="filters">
+      <div class="fgroup">
+        <span class="flabel" id="lbl-focus">Focus area</span>
+        <div class="chips" id="focusChips" role="group" aria-labelledby="lbl-focus"></div>
+      </div>
+      <div class="fgroup">
+        <span class="flabel" id="lbl-who">Who is applying?</span>
+        <div class="chips" id="whoChips" role="group" aria-labelledby="lbl-who"></div>
+        <div class="note" id="fiscalNote" hidden>
+          No nonprofit status yet? A <strong>fiscal sponsor</strong> is an existing nonprofit that receives the grant on your group's behalf. Many funders accept this, so ask before you rule yourself out.
+        </div>
+      </div>
+      <label class="toggle"><input type="checkbox" id="hideInvite"> Hide funders that only work by invitation</label>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-all" aria-selected="true">All grants</button>
+    <button class="tab" role="tab" id="tab-saved" aria-selected="false">Saved (0)</button>
+  </div>
+  <div class="toolbar">
+    <span id="count"></span>
+    <span>
+      <button class="linkbtn" id="copyBtn" hidden>Copy saved list</button>
+      <button class="linkbtn" id="clearBtn">Clear filters</button>
+    </span>
+  </div>
+
+  <ul class="list" id="list"></ul>
+
+  <section class="more">
+    <h2>Keep searching</h2>
+    <p>No list is complete. These databases update often, and local community foundations are a strong source of smaller grants.</p>
+    <ul>
+      <li><a href="https://grantable.co/grants/lgbtq" target="_blank" rel="noopener">Grantable: LGBTQ nonprofit grants</a><span>Free database with hundreds of listings, many from local foundations.</span></li>
+      <li><a href="https://lgbtfunders.org" target="_blank" rel="noopener">Funders for LGBTQ Issues</a><span>Research and directories about who funds LGBTQ+ work.</span></li>
+      <li><a href="https://www.cof.org/community-foundation-locator" target="_blank" rel="noopener">Community foundation locator</a><span>Find the foundation for your city or county. Many run LGBTQ+ or equity funds.</span></li>
+      <li><a href="https://candid.org" target="_blank" rel="noopener">Candid</a><span>Foundation directory and funder profiles. Public libraries often give free access.</span></li>
+      <li><a href="https://www.grants.gov" target="_blank" rel="noopener">Grants.gov</a><span>Federal grants. Priorities can change, so read each notice closely.</span></li>
+    </ul>
+  </section>
+
+  <p class="fine">Deadlines, amounts, and eligibility change often, and some programs pause or close. Treat this as a starting map: confirm every detail on the funder's own website before you apply. Nothing here is legal or financial advice.</p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const FOCUS = {
+  lgbtq:{label:"LGBTQ+ rights",color:"#7B3FBF"},
+  trans:{label:"Trans & nonbinary",color:"#1B7FAE"},
+  racial:{label:"Racial & social justice",color:"#BD4318"},
+  legal:{label:"Legal & criminal justice",color:"#1E7A5E"},
+  awareness:{label:"Awareness, arts & media",color:"#B77F00"},
+  health:{label:"Health & wellbeing",color:"#BF3266"},
+  scholar:{label:"Scholarships",color:"#3B4FC0"}
+};
+const WHO = {ind:"An individual", group:"A grassroots group", org:"A registered nonprofit"};
+const STATUS = {
+  open:{label:"Open application cycle",cls:"st-open",rank:0},
+  rolling:{label:"Rolling",cls:"st-rolling",rank:0},
+  check:{label:"Check site for current call",cls:"st-check",rank:1},
+  invite:{label:"Mostly by invitation",cls:"st-invite",rank:2},
+  live:{label:"Live find",cls:"st-live",rank:-1}
+};
+
+const G = [
+ {name:"Trans Justice Funding Project",focus:"trans",who:["group","org"],apply:"open",amount:"Small grassroots grants",region:"United States",
+  blurb:"Funds trans-led grassroots groups. A panel of trans people decides who receives money.",
+  tip:"Built for small, community-rooted groups. Check the site for the current application window.",url:"https://transjusticefundingproject.org"},
+ {name:"Astraea Lesbian Foundation for Justice",focus:"lgbtq",who:["org","group"],apply:"check",amount:"Varies",region:"United States & global",
+  blurb:"Supports LGBTQI+ movements led by the people most affected, including queer and trans people of color.",
+  tip:"Runs open calls at times, but much of its giving is proactive. Read the grantmaking page first.",url:"https://astraeafoundation.org"},
+ {name:"Third Wave Fund",focus:"trans",who:["group","org"],apply:"check",amount:"Varies",region:"United States",
+  blurb:"Gender justice funder backing young people, people of color, and trans and queer-led organizing.",
+  tip:"Look for current funds and deadlines under its grantmaking section.",url:"https://thirdwavefund.org"},
+ {name:"Urgent Action Fund",focus:"awareness",who:["group","org"],apply:"rolling",amount:"Rapid-response grants",region:"Global",
+  blurb:"Fast grants for women, trans, and nonbinary activists when a crisis or opportunity can't wait.",
+  tip:"Designed for urgent moments. Eligibility is specific, so read the criteria before applying.",url:"https://urgentactionfund.org"},
+ {name:"Mama Cash",focus:"lgbtq",who:["group","org"],apply:"check",amount:"Varies",region:"Global",
+  blurb:"Feminist fund supporting groups led by women, girls, trans, intersex, and gender-nonconforming people.",
+  tip:"Focused on small, new, and hard-to-fund groups. Check which regions it is funding now.",url:"https://www.mamacash.org"},
+ {name:"Fund for Global Human Rights",focus:"racial",who:["group","org"],apply:"check",amount:"Varies",region:"Global",
+  blurb:"Long-term support for grassroots human rights groups, including LGBTQ+ and anti-discrimination work.",
+  tip:"Grants target specific countries and regions. Check its eligibility page.",url:"https://globalhumanrights.org"},
+ {name:"Horizons Foundation",focus:"lgbtq",who:["org"],apply:"open",amount:"Varies",region:"San Francisco Bay Area",
+  blurb:"The country's oldest LGBTQ+ community foundation. Funds Bay Area groups serving LGBTQ+ communities.",
+  tip:"Annual grant cycle. Sign up for its updates so you don't miss the window.",url:"https://www.horizonsfoundation.org"},
+ {name:"Pride Foundation",focus:"lgbtq",who:["org","ind"],apply:"open",amount:"Varies",region:"AK, ID, MT, OR, WA",
+  blurb:"Community grants for LGBTQ+ organizations in the Northwest, plus scholarships for students.",
+  tip:"Nonprofits and individual students apply through different programs.",url:"https://www.pridefoundation.org"},
+ {name:"Our Fund Foundation: LGBTQ+ Health & Wellness Fund",focus:"health",who:["org"],apply:"open",amount:"Varies",region:"Broward & Miami-Dade, FL",
+  blurb:"Supports health and wellness services for LGBTQ+ communities in South Florida.",
+  tip:"Check the annual timeline on its grants page.",url:"https://www.ourfund.org"},
+ {name:"Cleveland Foundation: LGBTQ+ Opportunity Fund",focus:"lgbtq",who:["org"],apply:"check",amount:"$10,000 – $25,000",region:"Greater Cleveland, OH",
+  blurb:"A fund launched to strengthen LGBTQ+ organizations and programs in the Cleveland area.",
+  tip:"Confirm the current cycle and eligibility on the foundation's site.",url:"https://www.clevelandfoundation.org"},
+ {name:"Delaware Valley Legacy Fund: LGBTQ+ Grants",focus:"lgbtq",who:["org"],apply:"open",amount:"Varies",region:"Greater Philadelphia",
+  blurb:"Supports projects that create supportive spaces and inclusive services for LGBTQ+ people.",
+  tip:"The 2026 window ran June 8 to July 10. Watch for the next cycle.",url:"https://www.dvlf.org"},
+ {name:"Maine Justice Foundation: LGBTQ+ Justice Fund",focus:"legal",who:["org"],apply:"check",amount:"Varies",region:"Maine",
+  blurb:"Funds civil legal aid for LGBTQ+ people in Maine on housing, benefits, and personal safety.",
+  tip:"Aimed at legal aid providers. Check the site for the current application.",url:"https://www.mainejustice.org"},
+ {name:"Community Foundation for Northeast Florida: LGBTQ Support Grants",focus:"lgbtq",who:["org"],apply:"check",amount:"Up to $10,000",region:"Northeast Florida",
+  blurb:"Grants that build inclusive community and services for LGBTQ+ people in the Jacksonville area.",
+  tip:"Confirm dates and eligibility on the foundation's site.",url:"https://www.jaxcf.org"},
+ {name:"Community Foundation for Southern Arizona: LGBTQ+ Alliance Fund",focus:"lgbtq",who:["org"],apply:"check",amount:"Varies",region:"Southern Arizona",
+  blurb:"A community fund supporting LGBTQ+ programs and organizations in Southern Arizona.",
+  tip:"Details are limited online, so contact the foundation to confirm the current process.",url:"https://www.cfsaz.org"},
+ {name:"Plus Collective: Grassroots Grants",focus:"lgbtq",who:["group","org"],apply:"check",amount:"Up to $5,000",region:"The Carolinas",
+  blurb:"Small grassroots grants for LGBTQ+ work, hosted by the Foundation for the Carolinas.",
+  tip:"Small amounts are often easier to win. Check the foundation's site for the current call.",url:"https://www.fftc.org"},
+ {name:"Point Foundation",focus:"scholar",who:["ind"],apply:"open",amount:"Scholarship, varies",region:"United States",
+  blurb:"The nation's largest scholarship program for LGBTQ+ students, with mentoring and community.",
+  tip:"Scholarships are non-repayable. Check the site for the current application dates.",url:"https://pointfoundation.org"},
+ {name:"NewFest New Voices Filmmaker Grant",focus:"awareness",who:["ind"],apply:"check",amount:"$25,000 (past cycle)",region:"United States",
+  blurb:"Supports emerging LGBTQ+ directors making films, in partnership with Netflix.",
+  tip:"Amounts and eligibility come from a past cycle. Confirm whether it is open now.",url:"https://newfest.org"},
+ {name:"Awesome Foundation",focus:"awareness",who:["ind","group"],apply:"rolling",amount:"About $1,000",region:"Global chapters",
+  blurb:"Local chapters give one-off grants to creative projects and community ideas, no strings attached.",
+  tip:"Good for a small awareness project, event, or zine. Pick a chapter and apply to it directly.",url:"https://www.awesomefoundation.org"},
+ {name:"Borealis Philanthropy",focus:"racial",who:["org","group"],apply:"check",amount:"Varies",region:"United States",
+  blurb:"Hosts funds for racial justice, trans communities, and disability justice, among others.",
+  tip:"Each fund has its own process. Browse the funds and find the closest match.",url:"https://borealisphilanthropy.org"},
+ {name:"Groundswell Fund",focus:"racial",who:["org"],apply:"check",amount:"Varies",region:"United States",
+  blurb:"Backs reproductive and racial justice organizing led by women of color and trans people of color.",
+  tip:"Check whether a fund is accepting proposals or works by invitation.",url:"https://groundswellfund.org"},
+ {name:"Tides Foundation",focus:"racial",who:["org"],apply:"check",amount:"Varies",region:"United States & global",
+  blurb:"Funds social justice, human rights, and equity work through many issue-focused funds.",
+  tip:"Explore its funds and initiatives to see which take applications.",url:"https://www.tides.org"},
+ {name:"Solidaire Network",focus:"racial",who:["org"],apply:"invite",amount:"Varies",region:"United States",
+  blurb:"A donor community moving money to movement-led work on racial, economic, and gender justice.",
+  tip:"Funds organizations mainly through its own process, so read how it selects groups.",url:"https://solidairenetwork.org"},
+ {name:"Public Welfare Foundation",focus:"legal",who:["org"],apply:"check",amount:"Varies",region:"United States",
+  blurb:"Supports criminal justice reform, youth justice, and worker rights.",
+  tip:"Check its current priorities and how it accepts proposals.",url:"https://www.publicwelfare.org"},
+ {name:"Marguerite Casey Foundation",focus:"racial",who:["org"],apply:"invite",amount:"Varies",region:"United States",
+  blurb:"Supports family-led, community-based organizing for racial and economic justice.",
+  tip:"Read its guidelines. It often approaches groups rather than taking cold applications.",url:"https://www.caseygrants.org"},
+ {name:"Arcus Foundation",focus:"lgbtq",who:["org"],apply:"invite",amount:"Large grants",region:"United States & global",
+  blurb:"Major funder of LGBTQ social justice, plus conservation. Big grants, closely selected.",
+  tip:"Typically works through invitations or short inquiries. Read the how-to-apply page first.",url:"https://www.arcusfoundation.org"},
+ {name:"Gill Foundation",focus:"lgbtq",who:["org"],apply:"invite",amount:"Varies",region:"United States",
+  blurb:"Long-time funder of LGBTQ equality work across the country.",
+  tip:"Check whether it is taking inquiries or approaching groups directly.",url:"https://www.gillfoundation.org"},
+ {name:"Open Society Foundations",focus:"racial",who:["org"],apply:"invite",amount:"Large grants",region:"Global",
+  blurb:"Funds justice, human rights, and equity work worldwide, including LGBTQ+ rights.",
+  tip:"Generally does not take unsolicited proposals. Useful mainly for larger organizations.",url:"https://www.opensocietyfoundations.org"},
+ {name:"Ford Foundation",focus:"racial",who:["org"],apply:"invite",amount:"Large grants",region:"Global",
+  blurb:"Large funder of social justice, including gender, racial, and disability justice.",
+  tip:"Mostly funds by invitation. Read its guidance on unsolicited proposals.",url:"https://www.fordfoundation.org"}
+];
+G.forEach((g,i)=>{g.id='c'+i;g.ord=i;});
+
+const state = {q:"",focus:"all",who:"any",hideInvite:false,liveOnly:false,tab:"all",saved:new Set()};
+const $ = id => document.getElementById(id);
+
+function matches(g, ignoreFocus){
+  if(state.q){
+    const hay = (g.name+" "+g.blurb+" "+g.region+" "+FOCUS[g.focus].label+" "+g.tip).toLowerCase();
+    if(!state.q.toLowerCase().split(/\s+/).every(w=>hay.includes(w))) return false;
+  }
+  if(!ignoreFocus && state.focus!=="all" && g.focus!==state.focus) return false;
+  if(state.who!=="any" && !g.who.includes(state.who)) return false;
+  if(state.hideInvite && g.apply==="invite") return false;
+  if(state.liveOnly && !g.live) return false;
+  return true;
+}
+function visible(){
+  let list = G.filter(g=>matches(g,false));
+  if(state.tab==="saved") list = list.filter(g=>state.saved.has(g.id));
+  return list.sort((a,b)=>STATUS[a.apply].rank-STATUS[b.apply].rank || a.ord-b.ord);
+}
+
+function chip(label,pressed,onClick,color){
+  const b = document.createElement("button");
+  b.className="chip"; b.type="button"; b.setAttribute("aria-pressed",pressed);
+  if(color){const d=document.createElement("span");d.className="dot";d.style.background=color;b.appendChild(d)}
+  b.appendChild(document.createTextNode(label));
+  b.onclick=onClick; return b;
+}
+function renderFilters(){
+  const fc=$("focusChips"); fc.innerHTML="";
+  fc.appendChild(chip("All",state.focus==="all",()=>{state.focus="all";render()}));
+  Object.entries(FOCUS).forEach(([k,v])=>fc.appendChild(chip(v.label,state.focus===k,()=>{state.focus=k;render()},v.color)));
+  const wc=$("whoChips"); wc.innerHTML="";
+  wc.appendChild(chip("Anyone",state.who==="any",()=>{state.who="any";render()}));
+  Object.entries(WHO).forEach(([k,v])=>wc.appendChild(chip(v,state.who===k,()=>{state.who=k;render()})));
+  $("fiscalNote").hidden = state.who!=="group";
+}
+function renderBar(){
+  const bar=$("bar"); bar.innerHTML="";
+  const pool = G.filter(g=>matches(g,true));
+  const counts={}; pool.forEach(g=>counts[g.focus]=(counts[g.focus]||0)+1);
+  Object.keys(FOCUS).forEach(k=>{
+    if(!counts[k]) return;
+    const b=document.createElement("button");
+    b.type="button"; b.style.background=FOCUS[k].color; b.style.flexGrow=counts[k]; b.style.flexBasis="0";
+    const on = state.focus===k;
+    b.setAttribute("aria-pressed",on);
+    b.setAttribute("aria-label",`${FOCUS[k].label}: ${counts[k]} ${counts[k]===1?"grant":"grants"}. Filter by this focus.`);
+    b.title=`${FOCUS[k].label}: ${counts[k]}`;
+    if(state.focus!=="all" && !on) b.classList.add("dim");
+    b.onclick=()=>{state.focus = on ? "all" : k; render()};
+    bar.appendChild(b);
+  });
+  $("barCaption").textContent = pool.length
+    ? `${pool.length} ${pool.length===1?"funder":"funders"} by focus. Tap a color to filter.`
+    : "No funders match yet.";
+}
+function renderList(){
+  const list=visible(), ul=$("list"); ul.innerHTML="";
+  $("count").textContent = `${list.length} ${list.length===1?"result":"results"}`;
+  if(!list.length){
+    const li=document.createElement("li"); li.className="empty";
+    li.innerHTML = state.tab==="saved" && !state.saved.size
+      ? "<p>You haven't saved any grants yet. Tap Save on a grant to keep it here.</p>"
+      : "<p>Nothing matches those filters. Loosen a filter, or search the databases at the bottom of the page.</p>";
+    const b=document.createElement("button"); b.className="btn"; b.textContent = state.tab==="saved" && !state.saved.size ? "Browse all grants" : "Clear filters";
+    b.onclick=()=>{ if(state.tab==="saved" && !state.saved.size){state.tab="all";render()} else clearFilters(); };
+    li.appendChild(b); ul.appendChild(li); return;
+  }
+  list.forEach(g=>{
+    const f=FOCUS[g.focus], s=STATUS[g.apply], saved=state.saved.has(g.id);
+    const li=document.createElement("li"); li.className="grant"; li.style.setProperty("--c",f.color);
+    li.innerHTML = `
+      <div class="g-top">
+        <div><h3></h3><p class="g-focus"></p></div>
+        <button class="save" type="button"></button>
+      </div>
+      <p class="g-blurb"></p>
+      <div class="g-meta">
+        <span class="status ${s.cls}">${s.label}</span>
+        ${g.live?'<span><strong>Deadline:</strong> <span class="dlv"></span></span>':''}
+        <span><strong>Amount:</strong> <span class="amt"></span></span>
+        <span><strong>Where:</strong> <span class="reg"></span></span>
+        <span><strong>For:</strong> <span class="whos"></span></span>
+      </div>
+      <p class="g-tip"><strong>Good to know:</strong> <span class="tip"></span></p>
+      <a class="g-link" target="_blank" rel="noopener">Visit funder website</a>`;
+    li.querySelector("h3").textContent=g.name;
+    if(g.live){ const n=document.createElement("span"); n.className="newtag"; n.textContent="NEW"; li.querySelector("h3").appendChild(n); li.querySelector(".dlv").textContent=g.deadline; }
+    li.querySelector(".g-focus").textContent=f.label;
+    li.querySelector(".g-blurb").textContent=g.blurb;
+    li.querySelector(".amt").textContent=g.amount;
+    li.querySelector(".reg").textContent=g.region;
+    li.querySelector(".whos").textContent=g.who.map(w=>WHO[w].replace(/^An? /,"")).join(", ");
+    li.querySelector(".tip").textContent=g.tip;
+    const a=li.querySelector(".g-link"); a.href=g.url; a.setAttribute("aria-label","Visit "+g.name+" website (opens in a new tab)");
+    const sb=li.querySelector(".save");
+    sb.textContent=saved?"Saved":"Save"; sb.setAttribute("aria-pressed",saved);
+    sb.setAttribute("aria-label",(saved?"Remove from saved: ":"Save: ")+g.name);
+    sb.onclick=()=>{ saved?state.saved.delete(g.id):state.saved.add(g.id); persistSaved(); render(); };
+    ul.appendChild(li);
+  });
+}
+function renderTabs(){
+  $("tab-all").setAttribute("aria-selected",state.tab==="all");
+  $("tab-saved").setAttribute("aria-selected",state.tab==="saved");
+  $("tab-saved").textContent=`Saved (${state.saved.size})`;
+  $("copyBtn").hidden = !(state.tab==="saved" && state.saved.size);
+}
+function render(){ renderFilters(); renderBar(); renderTabs(); renderList(); }
+function clearFilters(){ state.q="";state.focus="all";state.who="any";state.hideInvite=false; $("q").value=""; $("hideInvite").checked=false; render(); }
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),2000); }
+
+$("q").addEventListener("input",e=>{state.q=e.target.value.trim();render()});
+$("hideInvite").addEventListener("change",e=>{state.hideInvite=e.target.checked;render()});
+$("clearBtn").onclick=clearFilters;
+$("tab-all").onclick=()=>{state.tab="all";render()};
+$("tab-saved").onclick=()=>{state.tab="saved";render()};
+$("copyBtn").onclick=()=>{
+  const text = G.filter(g=>state.saved.has(g.id)).map(g=>`${g.name}\n${g.url}\n${g.amount} | ${g.region}`).join("\n\n");
+  const done=()=>toast("Saved list copied");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(()=>fallback());
+  } else fallback();
+  function fallback(){
+    const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy");done()}catch(e){toast("Couldn't copy. Try selecting the text instead.")}
+    document.body.removeChild(ta);
+  }
+};
+$("liveOnly").addEventListener("change",e=>{state.liveOnly=e.target.checked;render()});
+
+/* ---------- storage (persists between visits when available) ---------- */
+async function sget(k){ try{ const r=await window.storage.get(k); return r?JSON.parse(r.value):null }catch(e){ return null } }
+async function sset(k,v){ try{ await window.storage.set(k,JSON.stringify(v)) }catch(e){} }
+function persistSaved(){ sset("saved-ids",[...state.saved]); }
+
+/* ---------- live search via Claude + web search ---------- */
+const TOPICS=[
+ {key:"lgbtq",q:"LGBTQ+ rights and community organizations, including trans and queer-led groups"},
+ {key:"racial",q:"racial justice, social justice, and fighting discrimination and injustice"},
+ {key:"legal",q:"criminal legal reform, civil rights legal aid, and police accountability"},
+ {key:"awareness",q:"awareness campaigns, media, film, and arts about LGBTQ+ and social justice issues"}
+];
+let liveItems=[], busy=false, autoTimer=null;
+
+function slug(u){ return "l:"+u.toLowerCase().replace(/^https?:\/\/(www\.)?/,"").replace(/[^a-z0-9]+/g,"-").slice(0,80); }
+function normName(n){ return n.toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
+
+async function searchTopic(t){
+  const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+  const prompt=`Today is ${today}. Use web search to find grants that are open now or opening soon for: ${t.q}. Include only non-repayable grants, fellowships, or scholarships from real funders, and skip anything whose deadline has passed. Reply with ONLY a JSON array (no markdown, no commentary) of up to 4 items. Each item: {"name":"","funder":"","focus":"lgbtq|trans|racial|legal|awareness|health|scholar","who":["ind","group","org"],"amount":"","deadline":"a date, or Rolling","region":"","blurb":"under 25 words","url":"the official page you actually found"}`;
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}],tools:[{type:"web_search_20250305",name:"web_search"}]})
+  });
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const data=await res.json();
+  let text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n").replace(/<\/?cite[^>]*>/g,"").replace(/```json|```/g,"");
+  const start=text.indexOf("[{"), end=text.lastIndexOf("}");
+  if(start<0||end<start) return [];
+  let arr; try{ arr=JSON.parse(text.slice(start,end+1)+"]"); }catch(e){ return []; }
+  return arr.filter(x=>x&&typeof x.name==="string"&&typeof x.url==="string"&&/^https?:\/\//.test(x.url)).map(x=>({
+    name:x.name.slice(0,120), funder:(x.funder||"").slice(0,80),
+    focus:FOCUS[x.focus]?x.focus:t.key,
+    who:(Array.isArray(x.who)?x.who:[]).filter(w=>WHO[w]).length?x.who.filter(w=>WHO[w]):["org"],
+    amount:(x.amount||"See funder site").toString().slice(0,60),
+    deadline:(x.deadline||"See funder site").toString().slice(0,40),
+    region:(x.region||"See funder site").toString().slice(0,60),
+    blurb:(x.blurb||"").toString().slice(0,220), url:x.url
+  }));
+}
+function isExpired(d){ const t=Date.parse(d); return !isNaN(t) && t < Date.now()-86400000; }
+
+function applyLive(items){
+  for(let i=G.length-1;i>=0;i--) if(G[i].live) G.splice(i,1);
+  const known=new Set(G.map(g=>normName(g.name)));
+  const seen=new Set();
+  items.forEach((x,i)=>{
+    const id=slug(x.url), nm=normName(x.name);
+    if(seen.has(id)||known.has(nm)) return; seen.add(id);
+    G.push({...x,id,ord:1000+i,live:true,apply:"live",
+      tip:"Found by live web search"+(x.foundOn?" on "+x.foundOn:"")+". Details can be wrong or out of date, so confirm on the funder's site before applying."});
+  });
+}
+function setStatus(msg,isBusy){ $("liveStatus").textContent=msg; $("pulse").classList.toggle("busy",!!isBusy); }
+function timeStr(ts){ return new Date(ts).toLocaleString("en-US",{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}); }
+
+async function runLive(manual){
+  if(busy) return; busy=true; $("liveBtn").disabled=true;
+  const before=new Set(liveItems.map(x=>x.url));
+  const found=[]; let ok=0, failed=0;
+  setStatus("Searching the web for open grants (0 of "+TOPICS.length+" topics done)…",true);
+  await Promise.all(TOPICS.map(t=>searchTopic(t).then(r=>{ok++;found.push(...r)}).catch(()=>{failed++}).finally(()=>{
+    setStatus("Searching the web for open grants ("+(ok+failed)+" of "+TOPICS.length+" topics done)…",true);
+  })));
+  busy=false; $("liveBtn").disabled=false;
+  if(ok===0){
+    setStatus("Live search isn't available right now. It works when this app is open inside Claude. The curated list below still works.",false);
+    return;
+  }
+  const foundOn=new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  const merged=new Map();
+  [...found.map(x=>({...x,foundOn})),...liveItems].forEach(x=>{ const k=slug(x.url); if(!merged.has(k)&&!isExpired(x.deadline)) merged.set(k,x); });
+  liveItems=[...merged.values()].slice(0,60);
+  const fresh=liveItems.filter(x=>!before.has(x.url)).length;
+  const now=Date.now();
+  await sset("live-grants",{items:liveItems,checked:now});
+  applyLive(liveItems); render();
+  setStatus("Last checked "+timeStr(now)+". "+(fresh?fresh+" new "+(fresh===1?"find":"finds")+" this time. ":"Nothing new this time. ")+liveItems.length+" live finds saved."+(failed?" ("+failed+" topic"+(failed===1?"":"s")+" couldn't be searched.)":""),false);
+  if(manual && fresh) toast(fresh+" new "+(fresh===1?"grant":"grants")+" found");
+}
+$("liveBtn").onclick=()=>runLive(true);
+$("autoLive").addEventListener("change",e=>{
+  clearInterval(autoTimer);
+  if(e.target.checked) autoTimer=setInterval(()=>runLive(false),30*60*1000);
+});
+
+(async function boot(){
+  render();
+  const saved=await sget("saved-ids"); if(Array.isArray(saved)){ saved.forEach(id=>state.saved.add(id)); }
+  const cache=await sget("live-grants");
+  let stale=true;
+  if(cache&&Array.isArray(cache.items)){
+    liveItems=cache.items.filter(x=>!isExpired(x.deadline)); applyLive(liveItems);
+    stale=Date.now()-cache.checked>6*3600*1000;
+    setStatus("Last checked "+timeStr(cache.checked)+". "+liveItems.length+" live finds saved.",false);
+  } else setStatus("No live search yet.",false);
+  render();
+  if(stale) runLive(false);
+})();
+</script>
+</body>
+</html>
