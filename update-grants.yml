@@ -1,0 +1,26 @@
+name: Update live grants
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"   # every 6 hours
+  workflow_dispatch: {}      # lets you also trigger it manually from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch grants from Grants.gov
+        run: python3 .github/scripts/fetch_grants.py
+
+      - name: Commit updated grants.json
+        run: |
+          git config user.name "grant-finder-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add grants.json
+          git diff --staged --quiet || git commit -m "Update live grants ($(date -u +%Y-%m-%d))"
+          git push

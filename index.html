@@ -122,6 +122,7 @@
   .pulse.busy{animation:pulse 1s ease-in-out infinite}
   @keyframes pulse{50%{opacity:.25}}
   .live .toggle{margin-top:10px}
+  .live-note{margin:10px 0 0;font-size:.85rem;color:var(--ink-soft)}
   .btn[disabled]{opacity:.6;cursor:progress}
   .newtag{display:inline-block;margin-left:8px;padding:1px 7px;border-radius:4px;background:var(--legal);color:#fff;font-size:.78rem;font-weight:700;vertical-align:middle;letter-spacing:.02em}
   .st-live{background:#145A43;color:#fff}
@@ -138,11 +139,12 @@
     <p class="promise">Every funder here gives grants or scholarships, not loans.</p>
     <div class="live" aria-labelledby="liveH">
       <div class="live-row">
-        <h2 id="liveH"><span class="pulse" id="pulse"></span>Live grant updates</h2>
-        <button class="btn" id="liveBtn" type="button">Check for new grants</button>
+        <h2 id="liveH"><span class="pulse" id="pulse"></span>Live federal grant updates</h2>
+        <button class="btn" id="liveBtn" type="button">Refresh now</button>
       </div>
       <p class="live-status" id="liveStatus" role="status" aria-live="polite">Starting up…</p>
-      <label class="toggle"><input type="checkbox" id="autoLive"> Re-check every 30 minutes while this page is open</label>
+      <label class="toggle"><input type="checkbox" id="autoLive"> Re-check every 10 minutes while this page is open</label>
+      <p class="live-note">Pulled automatically every 6 hours from Grants.gov, the free federal grants database. This covers U.S. federal opportunities only — not the foundation and community grants in the list below.</p>
       <label class="toggle"><input type="checkbox" id="liveOnly"> Show only live finds</label>
     </div>
   </header>
@@ -444,41 +446,11 @@ async function sget(k){ try{ const r=await window.storage.get(k); return r?JSON.
 async function sset(k,v){ try{ await window.storage.set(k,JSON.stringify(v)) }catch(e){} }
 function persistSaved(){ sset("saved-ids",[...state.saved]); }
 
-/* ---------- live search via Claude + web search ---------- */
-const TOPICS=[
- {key:"lgbtq",q:"LGBTQ+ rights and community organizations, including trans and queer-led groups"},
- {key:"racial",q:"racial justice, social justice, and fighting discrimination and injustice"},
- {key:"legal",q:"criminal legal reform, civil rights legal aid, and police accountability"},
- {key:"awareness",q:"awareness campaigns, media, film, and arts about LGBTQ+ and social justice issues"}
-];
+/* ---------- live grants, pulled from grants.json (built by a GitHub Action from the free Grants.gov API) ---------- */
 let liveItems=[], busy=false, autoTimer=null;
 
 function slug(u){ return "l:"+u.toLowerCase().replace(/^https?:\/\/(www\.)?/,"").replace(/[^a-z0-9]+/g,"-").slice(0,80); }
 function normName(n){ return n.toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
-
-async function searchTopic(t){
-  const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
-  const prompt=`Today is ${today}. Use web search to find grants that are open now or opening soon for: ${t.q}. Include only non-repayable grants, fellowships, or scholarships from real funders, and skip anything whose deadline has passed. Reply with ONLY a JSON array (no markdown, no commentary) of up to 4 items. Each item: {"name":"","funder":"","focus":"lgbtq|trans|racial|legal|awareness|health|scholar","who":["ind","group","org"],"amount":"","deadline":"a date, or Rolling","region":"","blurb":"under 25 words","url":"the official page you actually found"}`;
-  const res=await fetch("https://api.anthropic.com/v1/messages",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:prompt}],tools:[{type:"web_search_20250305",name:"web_search"}]})
-  });
-  if(!res.ok) throw new Error("HTTP "+res.status);
-  const data=await res.json();
-  let text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n").replace(/<\/?cite[^>]*>/g,"").replace(/```json|```/g,"");
-  const start=text.indexOf("[{"), end=text.lastIndexOf("}");
-  if(start<0||end<start) return [];
-  let arr; try{ arr=JSON.parse(text.slice(start,end+1)+"]"); }catch(e){ return []; }
-  return arr.filter(x=>x&&typeof x.name==="string"&&typeof x.url==="string"&&/^https?:\/\//.test(x.url)).map(x=>({
-    name:x.name.slice(0,120), funder:(x.funder||"").slice(0,80),
-    focus:FOCUS[x.focus]?x.focus:t.key,
-    who:(Array.isArray(x.who)?x.who:[]).filter(w=>WHO[w]).length?x.who.filter(w=>WHO[w]):["org"],
-    amount:(x.amount||"See funder site").toString().slice(0,60),
-    deadline:(x.deadline||"See funder site").toString().slice(0,40),
-    region:(x.region||"See funder site").toString().slice(0,60),
-    blurb:(x.blurb||"").toString().slice(0,220), url:x.url
-  }));
-}
 function isExpired(d){ const t=Date.parse(d); return !isNaN(t) && t < Date.now()-86400000; }
 
 function applyLive(items){
@@ -489,7 +461,7 @@ function applyLive(items){
     const id=slug(x.url), nm=normName(x.name);
     if(seen.has(id)||known.has(nm)) return; seen.add(id);
     G.push({...x,id,ord:1000+i,live:true,apply:"live",
-      tip:"Found by live web search"+(x.foundOn?" on "+x.foundOn:"")+". Details can be wrong or out of date, so confirm on the funder's site before applying."});
+      tip:"Pulled automatically from Grants.gov (federal opportunities). Confirm eligibility and details on the official page before applying."});
   });
 }
 function setStatus(msg,isBusy){ $("liveStatus").textContent=msg; $("pulse").classList.toggle("busy",!!isBusy); }
@@ -497,46 +469,35 @@ function timeStr(ts){ return new Date(ts).toLocaleString("en-US",{month:"short",
 
 async function runLive(manual){
   if(busy) return; busy=true; $("liveBtn").disabled=true;
+  setStatus("Checking grants.json…",true);
   const before=new Set(liveItems.map(x=>x.url));
-  const found=[]; let ok=0, failed=0;
-  setStatus("Searching the web for open grants (0 of "+TOPICS.length+" topics done)…",true);
-  await Promise.all(TOPICS.map(t=>searchTopic(t).then(r=>{ok++;found.push(...r)}).catch(()=>{failed++}).finally(()=>{
-    setStatus("Searching the web for open grants ("+(ok+failed)+" of "+TOPICS.length+" topics done)…",true);
-  })));
-  busy=false; $("liveBtn").disabled=false;
-  if(ok===0){
-    setStatus("Live search isn't available right now. It works when this app is open inside Claude. The curated list below still works.",false);
-    return;
+  try{
+    const res = await fetch("grants.json?ts="+Date.now(), {cache:"no-store"});
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const data = await res.json();
+    const items = (data.items||[]).filter(x=>x&&x.url&&x.name&&!isExpired(x.deadline));
+    liveItems = items;
+    applyLive(liveItems);
+    render();
+    const fresh = liveItems.filter(x=>!before.has(x.url)).length;
+    const checkedTs = data.checked ? Date.parse(data.checked) : Date.now();
+    setStatus("Last updated "+timeStr(checkedTs)+" · "+liveItems.length+" open federal opportunit"+(liveItems.length===1?"y":"ies")+" from Grants.gov."+(manual&&fresh?" "+fresh+" new since your last check.":""),false);
+    if(manual && fresh) toast(fresh+" new "+(fresh===1?"grant":"grants")+" found");
+  }catch(e){
+    setStatus("Couldn't load grants.json yet. If you just set this up, the GitHub Action needs to run once — check the Actions tab in your repo, or run it manually. The curated list below still works.",false);
   }
-  const foundOn=new Date().toLocaleDateString("en-US",{month:"short",day:"numeric"});
-  const merged=new Map();
-  [...found.map(x=>({...x,foundOn})),...liveItems].forEach(x=>{ const k=slug(x.url); if(!merged.has(k)&&!isExpired(x.deadline)) merged.set(k,x); });
-  liveItems=[...merged.values()].slice(0,60);
-  const fresh=liveItems.filter(x=>!before.has(x.url)).length;
-  const now=Date.now();
-  await sset("live-grants",{items:liveItems,checked:now});
-  applyLive(liveItems); render();
-  setStatus("Last checked "+timeStr(now)+". "+(fresh?fresh+" new "+(fresh===1?"find":"finds")+" this time. ":"Nothing new this time. ")+liveItems.length+" live finds saved."+(failed?" ("+failed+" topic"+(failed===1?"":"s")+" couldn't be searched.)":""),false);
-  if(manual && fresh) toast(fresh+" new "+(fresh===1?"grant":"grants")+" found");
+  busy=false; $("liveBtn").disabled=false;
 }
 $("liveBtn").onclick=()=>runLive(true);
 $("autoLive").addEventListener("change",e=>{
   clearInterval(autoTimer);
-  if(e.target.checked) autoTimer=setInterval(()=>runLive(false),30*60*1000);
+  if(e.target.checked) autoTimer=setInterval(()=>runLive(false),10*60*1000);
 });
 
 (async function boot(){
   render();
   const saved=await sget("saved-ids"); if(Array.isArray(saved)){ saved.forEach(id=>state.saved.add(id)); }
-  const cache=await sget("live-grants");
-  let stale=true;
-  if(cache&&Array.isArray(cache.items)){
-    liveItems=cache.items.filter(x=>!isExpired(x.deadline)); applyLive(liveItems);
-    stale=Date.now()-cache.checked>6*3600*1000;
-    setStatus("Last checked "+timeStr(cache.checked)+". "+liveItems.length+" live finds saved.",false);
-  } else setStatus("No live search yet.",false);
-  render();
-  if(stale) runLive(false);
+  runLive(false);
 })();
 </script>
 </body>
